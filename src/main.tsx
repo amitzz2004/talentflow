@@ -7,27 +7,19 @@ import "./index.css";
 const queryClient = new QueryClient();
 
 async function prepare() {
-  // ✅ Only enable MSW in development/localhost
-  const isDevelopment = import.meta.env.DEV || 
-                        window.location.hostname === 'localhost' || 
-                        window.location.hostname === '127.0.0.1';
-  
-  if (isDevelopment) {
-    try {
-      const { worker } = await import("./api/mswServer");
-      await worker.start({
-        serviceWorker: {
-          url: "/mockServiceWorker.js",
-        },
-        onUnhandledRequest: "bypass",
-        quiet: false,
-      });
-      console.log("✅ MSW worker started");
-    } catch (error) {
-      console.error("❌ MSW failed to start:", error);
-    }
-  } else {
-    console.log("ℹ️ Running in production mode - MSW disabled");
+  // ✅ ALWAYS enable MSW (even in production for demo purposes)
+  try {
+    const { worker } = await import("./api/mswServer");
+    await worker.start({
+      serviceWorker: {
+        url: "/mockServiceWorker.js",
+      },
+      onUnhandledRequest: "bypass",
+      quiet: false,
+    });
+    console.log("✅ MSW worker started successfully");
+  } catch (error) {
+    console.error("❌ MSW failed to start:", error);
   }
 
   ReactDOM.createRoot(document.getElementById("root")!).render(
