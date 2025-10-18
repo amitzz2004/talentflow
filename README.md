@@ -320,8 +320,8 @@ This project is open source and available under the [MIT License](LICENSE).
 **Amit Chhotaray**
 
 - GitHub: [@amitz2004](https://github.com/amitz2004)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
+- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/amit-chhotaray-195a131b6/)
+- Email: amitchhotaray19@gmail.com
 
 ---
 
