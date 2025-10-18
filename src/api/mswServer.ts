@@ -7,27 +7,35 @@ const STORAGE_KEY = "talentflow_db";
 
 // === Utility Functions ===
 function loadDB() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    console.log("📦 Loading existing database from localStorage");
-    return JSON.parse(saved);
-  } else {
-    console.log("🌱 Creating new database with seed data");
-    const newDB = seedDatabase();
-    saveDB(newDB);
-    return newDB;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      console.log("📦 Loading existing database from localStorage");
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.warn("⚠️ Failed to load from localStorage:", error);
   }
+  
+  console.log("🌱 Creating new database with seed data");
+  const newDB = seedDatabase();
+  saveDB(newDB);
+  return newDB;
 }
 
 function saveDB(db: any) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-  console.log("💾 Database saved to localStorage");
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    console.log("💾 Database saved to localStorage");
+  } catch (error) {
+    console.warn("⚠️ Failed to save to localStorage:", error);
+  }
 }
 
 // === Initial Mock Database ===
 let db = loadDB();
 
-console.log("🔍 Initial DB loaded:");
+console.log("🔧 Initial DB loaded:");
 console.log("  - Candidates:", db.candidates.length);
 console.log("  - First candidate ID:", db.candidates[0]?.id);
 console.log("  - Assessments:", Object.keys(db.assessments).length);
@@ -39,8 +47,7 @@ const handlers = [
   // ======================
   http.get("/api/assessments", () => {
     console.log("📘 MSW: GET /api/assessments");
-    db = loadDB();
-    
+    db = loadDB(); // Reload from localStorage
     return HttpResponse.json({ data: db.assessments }, { status: 200 });
   }),
 
@@ -49,8 +56,7 @@ const handlers = [
   // ======================
   http.get("/api/candidates", () => {
     console.log("📘 MSW: GET /api/candidates");
-    db = loadDB();
-    
+    db = loadDB(); // Reload from localStorage
     return HttpResponse.json({ data: db.candidates }, { status: 200 });
   }),
 
@@ -59,22 +65,17 @@ const handlers = [
   // ======================
   http.post("/api/candidates/:id/assign", async ({ params, request }) => {
     console.log("📘 MSW: POST /api/candidates/:id/assign");
-    console.log("🔍 Params:", params);
     
     const { id } = params;
     console.log("🔍 Looking for candidate ID:", id);
-    console.log("🔍 ID type:", typeof id);
     
     const body = (await request.json()) as any;
     console.log("📦 Request body:", body);
     
-    db = loadDB();
-    
+    db = loadDB(); // Reload from localStorage
     console.log("📋 Total candidates in DB:", db.candidates.length);
-    console.log("📋 First candidate ID:", db.candidates[0]?.id);
-    console.log("📋 First candidate ID type:", typeof db.candidates[0]?.id);
 
-    // ✅ FIXED: Ensure string comparison
+    // ✅ Find candidate by ID
     const candidate = db.candidates.find((c: any) => String(c.id) === String(id));
     
     if (!candidate) {
@@ -116,10 +117,8 @@ const handlers = [
       },
     });
 
-    saveDB(db);
+    saveDB(db); // Save to localStorage
     console.log("✅ MSW: Assigned assessment to", candidate.name);
-    console.log("✅ Assignment data:", newAssignment);
-
     return HttpResponse.json(
       { success: true, data: newAssignment },
       { status: 201 }
@@ -131,8 +130,7 @@ const handlers = [
   // ======================
   http.get("/api/assigned", () => {
     console.log("📘 MSW: GET /api/assigned");
-    db = loadDB();
-
+    db = loadDB(); // Reload from localStorage
     const allAssigned = db.responses 
       ? Object.values(db.responses).flat() 
       : [];
@@ -146,8 +144,7 @@ const handlers = [
   http.get("/api/candidates/:id/timeline", ({ params }) => {
     console.log("📘 MSW: GET /api/candidates/:id/timeline");
     const { id } = params;
-    db = loadDB();
-
+    db = loadDB(); // Reload from localStorage
     const timeline = db.timelines?.[id as string] || [];
     return HttpResponse.json({ data: timeline }, { status: 200 });
   }),
@@ -160,7 +157,7 @@ const handlers = [
     const { id } = params;
     const body = (await request.json()) as any;
     
-    db = loadDB();
+    db = loadDB(); // Reload from localStorage
 
     const candidateIndex = db.candidates.findIndex((c: any) => String(c.id) === String(id));
     
@@ -191,8 +188,7 @@ const handlers = [
       },
     });
 
-    saveDB(db);
-
+    saveDB(db); // Save to localStorage
     console.log("✅ MSW: Updated candidate", id);
     return HttpResponse.json(
       { success: true, data: db.candidates[candidateIndex] },
@@ -206,8 +202,7 @@ const handlers = [
   http.get("/api/assessments/:id", ({ params }) => {
     console.log("📘 MSW: GET /api/assessments/:id");
     const { id } = params;
-    db = loadDB();
-
+    db = loadDB(); // Reload from localStorage
     const assessment = db.assessments[id as string];
     
     if (!assessment) {
